@@ -1,0 +1,26 @@
+# Node modules (will be installed by users)
+templates/backend/node_modules
+templates/frontend/node_modules
+node_modules
+
+# Test output
+test_output
+
+# Environment files with secrets
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode
+.idea
+
+# OS
+.DS_Store
+
+# Package lock files in templates (users will generate their own)
+templates/backend/package-lock.json
+templates/frontend/package-lock.json

@@ -1,0 +1,59 @@
+{
+  "name": "create-mern-pro",
+  "version": "1.0.0",
+  "description": "Create production-ready MERN stack applications with TypeScript, authentication, and best practices",
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-mern-pro": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "keywords": [
+    "mern",
+    "cli",
+    "generator",
+    "mongodb",
+    "express",
+    "react",
+    "node",
+    "typescript",
+    "authentication",
+    "jwt",
+    "oauth",
+    "boilerplate",
+    "scaffold",
+    "fullstack"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "node bin/cli.js",
+    "test": "node --test",
+    "prepublishOnly": "echo 'Ready to publish'",
+    "test:e2e": "node bin/cli.js test_output/e2e-test --npm --yes && cd test_output/e2e-test/backend && npm install && npx tsc --noEmit && cd ../frontend && npm install && npx tsc --noEmit"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^14.0.2",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^13.2.2",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
+}
