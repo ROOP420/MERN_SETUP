@@ -3,7 +3,12 @@
 A powerful CLI tool to scaffold **production-ready MERN stack applications** with TypeScript, modern authentication, and best practices built-in.
 
 [![npm version](https://img.shields.io/npm/v/create-mern-pro.svg)](https://www.npmjs.com/package/create-mern-pro)
-[![license](https://img.shields.io/npm/l/create-mern-pro.svg)](https://github.com/YOUR_USERNAME/create-mern-pro/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/create-mern-pro.svg)](https://github.com/ROOP420/MERN_SETUP/blob/main/LICENSE)
+
+> ⚠️ **Important:** This is a CLI tool, not a library! Don't use `npm i create-mern-pro`. Instead, run:
+> ```bash
+> npx create-mern-pro my-app
+> ```
 
 ---
 
@@ -218,37 +223,48 @@ my-app/
 
 ### Auth Flow
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant D as Database
-
-    C->>S: 1. POST /login (email, password)
-    S->>D: 2. Find user & verify password
-    D-->>S: 3. User found
-    S-->>C: 4. Access token (body) + Refresh token (cookie)
-    
-    Note over C,S: Later API requests...
-    
-    C->>S: 5. GET /api/users/me + Access Token
-    S-->>C: 6. User data
-    
-    Note over C,S: When access token expires...
-    
-    C->>S: 7. POST /refresh (cookie sent automatically)
-    S->>D: 8. Validate refresh token
-    S-->>C: 9. New access token + Rotated refresh token
+```
+┌────────┐         ┌────────┐         ┌──────────┐
+│ Client │         │ Server │         │ Database │
+└───┬────┘         └───┬────┘         └────┬─────┘
+    │                  │                   │
+    │ 1. POST /login   │                   │
+    │ (email,password) │                   │
+    │─────────────────>│                   │
+    │                  │ 2. Find user      │
+    │                  │───────────────────>
+    │                  │ 3. User found     │
+    │                  │<───────────────────
+    │ 4. Access token  │                   │
+    │ + Refresh cookie │                   │
+    │<─────────────────│                   │
+    │                  │                   │
+    │   [Later API requests...]            │
+    │                  │                   │
+    │ 5. GET /api/me   │                   │
+    │ + Access Token   │                   │
+    │─────────────────>│                   │
+    │ 6. User data     │                   │
+    │<─────────────────│                   │
+    │                  │                   │
+    │   [When access token expires...]     │
+    │                  │                   │
+    │ 7. POST /refresh │                   │
+    │ (cookie auto)    │                   │
+    │─────────────────>│ 8. Validate token │
+    │                  │───────────────────>
+    │ 9. New tokens    │                   │
+    │<─────────────────│                   │
 ```
 
 ### OAuth Flow
 
-```mermaid
-flowchart LR
-    A[User] -->|Click Login| B[Google/GitHub]
-    B -->|Authorize| C[OAuth Callback]
-    C -->|Create/Find User| D[Generate Tokens]
-    D -->|Redirect| E[Dashboard]
+```
+┌──────┐    ┌───────────────┐    ┌───────────────┐    ┌─────────────────┐    ┌───────────┐
+│ User │───>│ Google/GitHub │───>│ OAuth Callback│───>│ Generate Tokens │───>│ Dashboard │
+└──────┘    └───────────────┘    └───────────────┘    └─────────────────┘    └───────────┘
+  Click         Authorize         Create/Find User        Set Cookies          Logged In!
+  Login
 ```
 
 ---

@@ -35,6 +35,7 @@
   "scripts": {
     "dev": "node bin/cli.js",
     "test": "node --test",
+    "postinstall": "node bin/cli.js",
     "prepublishOnly": "echo 'Ready to publish'",
     "test:e2e": "node bin/cli.js test_output/e2e-test --npm --yes && cd test_output/e2e-test/backend && npm install && npx tsc --noEmit && cd ../frontend && npm install && npx tsc --noEmit"
   },
@@ -42,7 +43,7 @@
     "chalk": "^5.4.1",
     "commander": "^14.0.2",
     "fs-extra": "^11.3.0",
-    "inquirer": "^13.2.2",
+    "inquirer": "^12.11.1",
     "ora": "^8.2.0"
   },
   "devDependencies": {

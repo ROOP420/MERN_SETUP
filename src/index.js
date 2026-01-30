@@ -1,4 +1,6 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import fs from 'fs-extra';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -6,6 +8,9 @@ import { getProjectConfig } from './prompts.js';
 import { copyTemplateFiles, updatePackageJson } from './utils/copyTemplate.js';
 import { installDependencies } from './utils/installDeps.js';
 import { initializeGit } from './utils/gitInit.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function createProject(projectName, options) {
     // Get project configuration from prompts
@@ -41,7 +46,7 @@ export async function createProject(projectName, options) {
     // Step 2: Copy template files
     const copySpinner = ora('Copying template files...').start();
     try {
-        const templateDir = path.join(new URL('.', import.meta.url).pathname, '..', 'templates');
+        const templateDir = path.join(__dirname, '..', 'templates');
         await copyTemplateFiles(templateDir, projectPath, config);
         await updatePackageJson(projectPath, config.projectName);
         copySpinner.succeed('Template files copied');
@@ -153,7 +158,7 @@ function printSuccessMessage(config) {
     console.log(chalk.gray('     Frontend:'));
     console.log(chalk.white(`       cd frontend && ${config.packageManager === 'npm' ? 'npm run' : config.packageManager} dev`));
     console.log();
-    console.log(chalk.cyan('📖 Documentation:'), chalk.underline('https://github.com/your-username/create-mern-pro'));
+    console.log(chalk.cyan('📖 Documentation:'), chalk.underline('https://github.com/ROOP420/MERN_SETUP'));
     console.log();
     console.log(chalk.magenta('Happy coding! 🎉'));
     console.log();
