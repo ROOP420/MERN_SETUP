@@ -44,8 +44,8 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
     }
 );
 
-// Index for faster queries and cleanup
-refreshTokenSchema.index({ token: 1 });
+// Note: token index is created automatically by unique:true
+// Index for user lookups and TTL cleanup
 refreshTokenSchema.index({ user: 1 });
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index
 

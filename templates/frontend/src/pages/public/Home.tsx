@@ -112,7 +112,8 @@ export const Home: React.FC = () => {
                     <Link to={ROUTES.SIGNUP}>
                         <Button
                             size="lg"
-                            className="bg-white text-primary-600 hover:bg-gray-100"
+                            variant="secondary"
+                            className="!bg-white !text-primary-600 hover:!bg-gray-100 font-semibold"
                         >
                             Create Free Account
                         </Button>

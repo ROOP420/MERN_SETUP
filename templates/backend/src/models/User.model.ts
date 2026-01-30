@@ -77,10 +77,8 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     }
 );
 
-// Index for faster queries
-userSchema.index({ email: 1 });
-userSchema.index({ googleId: 1 }, { sparse: true });
-userSchema.index({ githubId: 1 }, { sparse: true });
+// Note: email index is created automatically by unique:true
+// googleId and githubId use sparse option on the field itself
 
 // Hash password before saving
 userSchema.pre('save', async function () {

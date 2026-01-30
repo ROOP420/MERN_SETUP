@@ -9,18 +9,22 @@ import routes from './routes/index.js';
 
 const app: Application = express();
 
-// Security middleware
-app.use(helmet());
+// CORS configuration - MUST be before helmet
+const corsOptions = {
+    origin: env.CLIENT_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
+};
 
-// CORS configuration
-app.use(
-    cors({
-        origin: env.CLIENT_URL,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    })
-);
+app.use(cors(corsOptions));
+
+// Security middleware - configure to not block CORS
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+}));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

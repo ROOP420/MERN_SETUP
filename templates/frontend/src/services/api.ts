@@ -43,8 +43,13 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        // If error is 401 and we haven't retried yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Skip refresh logic for auth endpoints to prevent infinite loop
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/refresh') ||
+            originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/register');
+
+        // If error is 401, not an auth endpoint, and we haven't retried yet
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             if (!isRefreshing) {
@@ -71,20 +76,23 @@ api.interceptors.response.use(
                     isRefreshing = false;
                     refreshSubscribers = [];
 
-                    // Refresh failed - logout user
-                    useAuthStore.getState().logout();
-                    window.location.href = '/login';
-
+                    // Refresh failed - just reject, don't redirect (let the component handle it)
                     return Promise.reject(refreshError);
                 }
             }
 
             // Wait for refresh to complete
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 subscribeTokenRefresh((token: string) => {
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     resolve(api(originalRequest));
                 });
+                // Also handle refresh failure
+                setTimeout(() => {
+                    if (isRefreshing) {
+                        reject(error);
+                    }
+                }, 10000); // 10 second timeout
             });
         }
 

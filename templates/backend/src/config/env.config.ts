@@ -20,8 +20,8 @@ const envSchema = z.object({
     // Cookie
     COOKIE_SECRET: z.string().min(32),
 
-    // CORS
-    CLIENT_URL: z.string().url().default('http://localhost:5173'),
+    // CORS - accepts any string for flexibility with different URL formats
+    CLIENT_URL: z.string().default('http://localhost:5173'),
 
     // Email
     SMTP_HOST: z.string().optional(),

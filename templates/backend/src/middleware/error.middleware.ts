@@ -12,14 +12,22 @@ interface ErrorResponse {
 
 export const errorHandler = (
     err: Error | ApiError,
-    _req: Request,
+    req: Request,
     res: Response,
     _next: NextFunction
 ): void => {
+    // Ensure CORS headers are set on error responses
+    const origin = req.headers.origin;
+    if (origin === env.CLIENT_URL) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
     let error = err;
 
-    // Log error in development
-    if (env.NODE_ENV === 'development') {
+    // Log error in development (but skip 401s - they're expected for unauthenticated users)
+    const errStatusCode = err instanceof ApiError ? err.statusCode : 500;
+    if (env.NODE_ENV === 'development' && errStatusCode !== 401) {
         console.error('❌ Error:', err);
     }
 

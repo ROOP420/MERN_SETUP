@@ -2,7 +2,7 @@
   "name": "create-mern-pro",
   "version": "1.0.0",
   "description": "Create production-ready MERN stack applications with TypeScript, authentication, and best practices",
-  "author": "",
+  "author": "Roop_Saha",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -50,10 +50,10 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/YOUR_USERNAME/MERN_SETUP.git"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/YOUR_USERNAME/MERN_SETUP/issues"
   },
-  "homepage": ""
+  "homepage": "https://github.com/YOUR_USERNAME/MERN_SETUP#readme"
 }
