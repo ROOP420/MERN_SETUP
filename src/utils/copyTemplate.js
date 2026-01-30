@@ -9,8 +9,9 @@ export async function copyTemplateFiles(templateDir, projectPath, config) {
     if (await fs.pathExists(backendSrc)) {
         await fs.copy(backendSrc, backendDest, {
             filter: (src) => {
-                // Skip node_modules if exists
-                return !src.includes('node_modules');
+                // Only skip if the file is INSIDE a node_modules directory within the template
+                const relativePath = path.relative(backendSrc, src);
+                return !relativePath.includes('node_modules');
             }
         });
 
@@ -28,7 +29,9 @@ export async function copyTemplateFiles(templateDir, projectPath, config) {
     if (await fs.pathExists(frontendSrc)) {
         await fs.copy(frontendSrc, frontendDest, {
             filter: (src) => {
-                return !src.includes('node_modules');
+                // Only skip if the file is INSIDE a node_modules directory within the template
+                const relativePath = path.relative(frontendSrc, src);
+                return !relativePath.includes('node_modules');
             }
         });
 
