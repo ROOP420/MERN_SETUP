@@ -35,7 +35,7 @@
   "scripts": {
     "dev": "node bin/cli.js",
     "test": "node --test",
-    "postinstall": "node bin/cli.js",
+    "postinstall": "echo '\\n✅ create-mern-pro installed!\\n\\n👉 To create a project, run:\\n   npx create-mern-pro my-app\\n'",
     "prepublishOnly": "echo 'Ready to publish'",
     "test:e2e": "node bin/cli.js test_output/e2e-test --npm --yes && cd test_output/e2e-test/backend && npm install && npx tsc --noEmit && cd ../frontend && npm install && npx tsc --noEmit"
   },
