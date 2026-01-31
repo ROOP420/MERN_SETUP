@@ -1,6 +1,6 @@
 {
   "name": "create-mern-pro",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Create production-ready MERN stack applications with TypeScript, authentication, and best practices",
   "author": "Roop_Saha",
   "license": "MIT",
