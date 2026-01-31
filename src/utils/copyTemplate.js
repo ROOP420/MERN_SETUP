@@ -44,6 +44,158 @@ export async function copyTemplateFiles(templateDir, projectPath, config) {
 
     // Create root files
     await createRootFiles(projectPath, config);
+
+    // Handle conditional OAuth features
+    await handleConditionalOAuth(projectPath, config);
+}
+
+async function handleConditionalOAuth(projectPath, config) {
+    const features = config.features || [];
+    const hasGoogleOAuth = features.includes('googleOAuth');
+    const hasGitHubOAuth = features.includes('githubOAuth');
+    const hasAnyOAuth = hasGoogleOAuth || hasGitHubOAuth;
+
+    // Modify backend package.json to remove OAuth packages if not selected
+    await modifyBackendPackageJson(projectPath, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth);
+
+    // Modify frontend Login/Signup pages to remove OAuth buttons
+    await modifyFrontendAuthPages(projectPath, hasGoogleOAuth, hasGitHubOAuth);
+
+    // Modify backend routes to remove OAuth routes if neither is selected
+    if (!hasAnyOAuth) {
+        await removeOAuthFromBackend(projectPath);
+    }
+}
+
+async function modifyBackendPackageJson(projectPath, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth) {
+    const pkgPath = path.join(projectPath, 'backend', 'package.json');
+    if (!await fs.pathExists(pkgPath)) return;
+
+    const pkg = await fs.readJson(pkgPath);
+
+    // Remove OAuth packages based on selection
+    if (!hasGoogleOAuth) {
+        delete pkg.dependencies['passport-google-oauth20'];
+        delete pkg.devDependencies['@types/passport-google-oauth20'];
+    }
+
+    if (!hasGitHubOAuth) {
+        delete pkg.dependencies['passport-github2'];
+        delete pkg.devDependencies['@types/passport-github2'];
+    }
+
+    // Remove passport entirely if no OAuth at all
+    if (!hasAnyOAuth) {
+        delete pkg.dependencies['passport'];
+        delete pkg.devDependencies['@types/passport'];
+    }
+
+    await fs.writeJson(pkgPath, pkg, { spaces: 4 });
+}
+
+async function modifyFrontendAuthPages(projectPath, hasGoogleOAuth, hasGitHubOAuth) {
+    const hasAnyOAuth = hasGoogleOAuth || hasGitHubOAuth;
+
+    // Modify Login.tsx
+    const loginPath = path.join(projectPath, 'frontend', 'src', 'pages', 'public', 'Login.tsx');
+    if (await fs.pathExists(loginPath)) {
+        let content = await fs.readFile(loginPath, 'utf-8');
+        content = modifyOAuthSection(content, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth);
+        await fs.writeFile(loginPath, content);
+    }
+
+    // Modify Signup.tsx
+    const signupPath = path.join(projectPath, 'frontend', 'src', 'pages', 'public', 'Signup.tsx');
+    if (await fs.pathExists(signupPath)) {
+        let content = await fs.readFile(signupPath, 'utf-8');
+        content = modifyOAuthSection(content, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth);
+        await fs.writeFile(signupPath, content);
+    }
+}
+
+function modifyOAuthSection(content, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth) {
+    // If no OAuth at all, remove the entire OAuth section (divider + buttons)
+    if (!hasAnyOAuth) {
+        // Remove the divider "Or continue with" section
+        content = content.replace(
+            /\{\/\* Divider \*\/\}[\s\S]*?\{\/\* OAuth Buttons \*\/\}[\s\S]*?<\/div>\s*<\/div>/,
+            ''
+        );
+        // Remove authService import if present
+        content = content.replace(/import \{ authService \} from ['"]@\/services\/auth\.service['"];\n?/, '');
+        return content;
+    }
+
+    // Remove only Google button if not selected
+    if (!hasGoogleOAuth) {
+        // Remove Google OAuth button (the <a> tag with Google)
+        content = content.replace(
+            /<a\s+href=\{authService\.getGoogleAuthUrl\(\)\}[\s\S]*?<span[^>]*>Google<\/span>\s*<\/a>/,
+            ''
+        );
+    }
+
+    // Remove only GitHub button if not selected
+    if (!hasGitHubOAuth) {
+        // Remove GitHub OAuth button (the <a> tag with GitHub)
+        content = content.replace(
+            /<a\s+href=\{authService\.getGitHubAuthUrl\(\)\}[\s\S]*?<span[^>]*>GitHub<\/span>\s*<\/a>/,
+            ''
+        );
+    }
+
+    // If only one OAuth, change grid-cols-2 to grid-cols-1
+    if (hasGoogleOAuth !== hasGitHubOAuth) {
+        content = content.replace('grid-cols-2', 'grid-cols-1');
+    }
+
+    return content;
+}
+
+async function removeOAuthFromBackend(projectPath) {
+    // Modify app.ts to remove passport initialization
+    const appPath = path.join(projectPath, 'backend', 'src', 'app.ts');
+    if (await fs.pathExists(appPath)) {
+        let content = await fs.readFile(appPath, 'utf-8');
+        // Remove passport import
+        content = content.replace(/import passport from 'passport';\n?/, '');
+        // Remove configurePassport from import
+        content = content.replace(/, configurePassport/, '');
+        // Remove passport initialization lines
+        content = content.replace(/\/\/ Passport initialization\napp\.use\(passport\.initialize\(\)\);\nconfigurePassport\(\);\n\n?/, '');
+        await fs.writeFile(appPath, content);
+    }
+
+    // Modify auth.routes.ts to remove OAuth routes
+    const routesPath = path.join(projectPath, 'backend', 'src', 'routes', 'auth.routes.ts');
+    if (await fs.pathExists(routesPath)) {
+        let content = await fs.readFile(routesPath, 'utf-8');
+        // Remove OAuth imports
+        content = content.replace(/,?\s*googleAuth,?\s*/g, '');
+        content = content.replace(/,?\s*googleAuthCallback,?\s*/g, '');
+        content = content.replace(/,?\s*googleCallback,?\s*/g, '');
+        content = content.replace(/,?\s*githubAuth,?\s*/g, '');
+        content = content.replace(/,?\s*githubAuthCallback,?\s*/g, '');
+        content = content.replace(/,?\s*githubCallback,?\s*/g, '');
+        // Remove OAuth route registrations
+        content = content.replace(/\/\/ OAuth routes - Google\nrouter\.get\('\/google'.*\nrouter\.get\('\/google\/callback'.*\n\n?/, '');
+        content = content.replace(/\/\/ OAuth routes - GitHub\nrouter\.get\('\/github'.*\nrouter\.get\('\/github\/callback'.*\n\n?/, '');
+        await fs.writeFile(routesPath, content);
+    }
+
+    // Optionally remove passport.config.ts
+    const passportConfigPath = path.join(projectPath, 'backend', 'src', 'config', 'passport.config.ts');
+    if (await fs.pathExists(passportConfigPath)) {
+        await fs.remove(passportConfigPath);
+    }
+
+    // Update config index to not export passport
+    const configIndexPath = path.join(projectPath, 'backend', 'src', 'config', 'index.ts');
+    if (await fs.pathExists(configIndexPath)) {
+        let content = await fs.readFile(configIndexPath, 'utf-8');
+        content = content.replace(/export \{ configurePassport \} from '\.\/passport\.config\.js';\n?/, '');
+        await fs.writeFile(configIndexPath, content);
+    }
 }
 
 export async function updatePackageJson(projectPath, projectName) {

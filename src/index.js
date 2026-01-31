@@ -89,7 +89,7 @@ export async function createProject(projectName, options) {
 async function createEnvFiles(projectPath) {
     const backendEnv = `# Server Configuration
 NODE_ENV=development
-PORT=5000
+PORT=8080
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/your-database-name
@@ -115,16 +115,16 @@ SMTP_PASS=your-app-password
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:8080/api/auth/google/callback
 
 # GitHub OAuth
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
-GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+GITHUB_CALLBACK_URL=http://localhost:8080/api/auth/github/callback
 `;
 
     const frontendEnv = `# API URL
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:8080/api
 
 # OAuth
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
