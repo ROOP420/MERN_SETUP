@@ -1,0 +1,10 @@
+{
+    "name": "fastapi-backend",
+    "version": "1.0.0",
+    "description": "FastAPI Backend",
+    "main": "main.py",
+    "scripts": {
+        "dev": "uvicorn main:app --reload",
+        "start": "uvicorn main:app"
+    }
+}
