@@ -183,6 +183,26 @@ async function removeOAuthFromBackend(projectPath) {
         await fs.writeFile(routesPath, content);
     }
 
+    // Modify auth.controller.ts to remove passport import and OAuth handlers
+    const controllerPath = path.join(projectPath, 'backend', 'src', 'controllers', 'auth.controller.ts');
+    if (await fs.pathExists(controllerPath)) {
+        let content = await fs.readFile(controllerPath, 'utf-8');
+        // Remove passport import
+        content = content.replace(/import passport from 'passport';\n?/, '');
+
+        // Remove OAuth callback functions
+        const googleCallbackRegex = /\/\*\*\n \* @desc    Google OAuth callback[\s\S]*?export const googleCallback = asyncHandler\(async \(req: Request, res: Response\) => \{[\s\S]*?\}\);\n/g;
+        const githubCallbackRegex = /\/\*\*\n \* @desc    GitHub OAuth callback[\s\S]*?export const githubCallback = asyncHandler\(async \(req: Request, res: Response\) => \{[\s\S]*?\}\);\n/g;
+
+        content = content.replace(googleCallbackRegex, '');
+        content = content.replace(githubCallbackRegex, '');
+
+        // Remove Passport authentication handlers (at the bottom of the file)
+        content = content.replace(/\/\/ Passport authentication handlers[\s\S]*/, '');
+
+        await fs.writeFile(controllerPath, content);
+    }
+
     // Optionally remove passport.config.ts
     const passportConfigPath = path.join(projectPath, 'backend', 'src', 'config', 'passport.config.ts');
     if (await fs.pathExists(passportConfigPath)) {
