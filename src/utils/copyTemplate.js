@@ -114,34 +114,52 @@ async function modifyFrontendAuthPages(projectPath, hasGoogleOAuth, hasGitHubOAu
 }
 
 function modifyOAuthSection(content, hasGoogleOAuth, hasGitHubOAuth, hasAnyOAuth) {
-    // If no OAuth at all, remove the entire OAuth section (divider + buttons)
+    // If no OAuth at all, remove the entire OAuth section (divider + buttons) and authService import
     if (!hasAnyOAuth) {
-        // Remove the divider "Or continue with" section
-        content = content.replace(
-            /\{\/\* Divider \*\/\}[\s\S]*?\{\/\* OAuth Buttons \*\/\}[\s\S]*?<\/div>\s*<\/div>/,
-            ''
-        );
-        // Remove authService import if present
-        content = content.replace(/import \{ authService \} from ['"]@\/services\/auth\.service['"];\n?/, '');
+        // Remove authService import
+        content = content.replace("import { authService } from '@/services/auth.service';\n", '');
+
+        // Remove the divider and OAuth buttons section
+        // Find the start of the divider section
+        const dividerStart = content.indexOf('{/* Divider */}');
+        if (dividerStart !== -1) {
+            // Find the end of the OAuth Buttons section (closing </div> after grid)
+            const oauthButtonsStart = content.indexOf('{/* OAuth Buttons */}', dividerStart);
+            if (oauthButtonsStart !== -1) {
+                // Find the closing </div> of the OAuth buttons grid
+                const gridEnd = content.indexOf('</div>', oauthButtonsStart);
+                if (gridEnd !== -1) {
+                    // Remove from divider start to after the closing div and any trailing whitespace
+                    const sectionEnd = gridEnd + '</div>'.length;
+                    content = content.substring(0, dividerStart) + content.substring(sectionEnd);
+                }
+            }
+        }
+
         return content;
     }
 
     // Remove only Google button if not selected
     if (!hasGoogleOAuth) {
-        // Remove Google OAuth button (the <a> tag with Google)
-        content = content.replace(
-            /<a\s+href=\{authService\.getGoogleAuthUrl\(\)\}[\s\S]*?<span[^>]*>Google<\/span>\s*<\/a>/,
-            ''
-        );
+        const googleButtonStart = content.indexOf('<a\n                    href={authService.getGoogleAuthUrl()}');
+        if (googleButtonStart !== -1) {
+            const googleButtonEnd = content.indexOf('</a>', googleButtonStart) + '</a>'.length;
+            // Also remove any trailing newlines
+            let endIndex = googleButtonEnd;
+            while (content[endIndex] === '\n' || content[endIndex] === ' ') {
+                endIndex++;
+            }
+            content = content.substring(0, googleButtonStart) + content.substring(endIndex);
+        }
     }
 
     // Remove only GitHub button if not selected
     if (!hasGitHubOAuth) {
-        // Remove GitHub OAuth button (the <a> tag with GitHub)
-        content = content.replace(
-            /<a\s+href=\{authService\.getGitHubAuthUrl\(\)\}[\s\S]*?<span[^>]*>GitHub<\/span>\s*<\/a>/,
-            ''
-        );
+        const githubButtonStart = content.indexOf('<a\n                    href={authService.getGitHubAuthUrl()}');
+        if (githubButtonStart !== -1) {
+            const githubButtonEnd = content.indexOf('</a>', githubButtonStart) + '</a>'.length;
+            content = content.substring(0, githubButtonStart) + content.substring(githubButtonEnd);
+        }
     }
 
     // If only one OAuth, change grid-cols-2 to grid-cols-1
@@ -158,11 +176,15 @@ async function removeOAuthFromBackend(projectPath) {
     if (await fs.pathExists(appPath)) {
         let content = await fs.readFile(appPath, 'utf-8');
         // Remove passport import
-        content = content.replace(/import passport from 'passport';\n?/, '');
+        content = content.replace("import passport from 'passport';\n", '');
         // Remove configurePassport from import
-        content = content.replace(/, configurePassport/, '');
+        content = content.replace(', configurePassport', '');
         // Remove passport initialization lines
-        content = content.replace(/\/\/ Passport initialization\napp\.use\(passport\.initialize\(\)\);\nconfigurePassport\(\);\n\n?/, '');
+        content = content.replace(`// Passport initialization
+app.use(passport.initialize());
+configurePassport();
+
+`, '');
         await fs.writeFile(appPath, content);
     }
 
@@ -170,16 +192,26 @@ async function removeOAuthFromBackend(projectPath) {
     const routesPath = path.join(projectPath, 'backend', 'src', 'routes', 'auth.routes.ts');
     if (await fs.pathExists(routesPath)) {
         let content = await fs.readFile(routesPath, 'utf-8');
-        // Remove OAuth imports
-        content = content.replace(/,?\s*googleAuth,?\s*/g, '');
-        content = content.replace(/,?\s*googleAuthCallback,?\s*/g, '');
-        content = content.replace(/,?\s*googleCallback,?\s*/g, '');
-        content = content.replace(/,?\s*githubAuth,?\s*/g, '');
-        content = content.replace(/,?\s*githubAuthCallback,?\s*/g, '');
-        content = content.replace(/,?\s*githubCallback,?\s*/g, '');
+
+        // Remove specific OAuth import lines (exact matches)
+        content = content.replace('    googleAuth,\n', '');
+        content = content.replace('    googleAuthCallback,\n', '');
+        content = content.replace('    googleCallback,\n', '');
+        content = content.replace('    githubAuth,\n', '');
+        content = content.replace('    githubAuthCallback,\n', '');
+        content = content.replace('    githubCallback,\n', '');
+
         // Remove OAuth route registrations
-        content = content.replace(/\/\/ OAuth routes - Google\nrouter\.get\('\/google'.*\nrouter\.get\('\/google\/callback'.*\n\n?/, '');
-        content = content.replace(/\/\/ OAuth routes - GitHub\nrouter\.get\('\/github'.*\nrouter\.get\('\/github\/callback'.*\n\n?/, '');
+        content = content.replace(`// OAuth routes - Google
+router.get('/google', googleAuth);
+router.get('/google/callback', googleAuthCallback, googleCallback);
+
+`, '');
+        content = content.replace(`// OAuth routes - GitHub
+router.get('/github', githubAuth);
+router.get('/github/callback', githubAuthCallback, githubCallback);
+
+`, '');
         await fs.writeFile(routesPath, content);
     }
 
@@ -188,22 +220,32 @@ async function removeOAuthFromBackend(projectPath) {
     if (await fs.pathExists(controllerPath)) {
         let content = await fs.readFile(controllerPath, 'utf-8');
         // Remove passport import
-        content = content.replace(/import passport from 'passport';\n?/, '');
+        content = content.replace("import passport from 'passport';\n", '');
 
-        // Remove OAuth callback functions
-        const googleCallbackRegex = /\/\*\*\n \* @desc    Google OAuth callback[\s\S]*?export const googleCallback = asyncHandler\(async \(req: Request, res: Response\) => \{[\s\S]*?\}\);\n/g;
-        const githubCallbackRegex = /\/\*\*\n \* @desc    GitHub OAuth callback[\s\S]*?export const githubCallback = asyncHandler\(async \(req: Request, res: Response\) => \{[\s\S]*?\}\);\n/g;
+        // Remove everything from "// Passport authentication handlers" to end of file
+        const passportHandlersIndex = content.indexOf('// Passport authentication handlers');
+        if (passportHandlersIndex !== -1) {
+            content = content.substring(0, passportHandlersIndex);
+        }
 
-        content = content.replace(googleCallbackRegex, '');
-        content = content.replace(githubCallbackRegex, '');
+        // Remove Google OAuth callback function
+        const googleCallbackStart = content.indexOf('/**\n * @desc    Google OAuth callback');
+        if (googleCallbackStart !== -1) {
+            const googleCallbackEnd = content.indexOf('});\n', googleCallbackStart) + 4;
+            content = content.substring(0, googleCallbackStart) + content.substring(googleCallbackEnd);
+        }
 
-        // Remove Passport authentication handlers (at the bottom of the file)
-        content = content.replace(/\/\/ Passport authentication handlers[\s\S]*/, '');
+        // Remove GitHub OAuth callback function
+        const githubCallbackStart = content.indexOf('/**\n * @desc    GitHub OAuth callback');
+        if (githubCallbackStart !== -1) {
+            const githubCallbackEnd = content.indexOf('});\n', githubCallbackStart) + 4;
+            content = content.substring(0, githubCallbackStart) + content.substring(githubCallbackEnd);
+        }
 
         await fs.writeFile(controllerPath, content);
     }
 
-    // Optionally remove passport.config.ts
+    // Remove passport.config.ts
     const passportConfigPath = path.join(projectPath, 'backend', 'src', 'config', 'passport.config.ts');
     if (await fs.pathExists(passportConfigPath)) {
         await fs.remove(passportConfigPath);
@@ -213,7 +255,7 @@ async function removeOAuthFromBackend(projectPath) {
     const configIndexPath = path.join(projectPath, 'backend', 'src', 'config', 'index.ts');
     if (await fs.pathExists(configIndexPath)) {
         let content = await fs.readFile(configIndexPath, 'utf-8');
-        content = content.replace(/export \{ configurePassport \} from '\.\/passport\.config\.js';\n?/, '');
+        content = content.replace("export { configurePassport } from './passport.config.js';\n", '');
         await fs.writeFile(configIndexPath, content);
     }
 }
